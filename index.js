@@ -3,8 +3,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
-
 const port = process.env.PORT || 5000;
+
 
 //middleware
 app.use(cors());
@@ -21,27 +21,27 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         await client.connect();
-        const restaurantsCollection = client.db('food_delivery').collection('restaurants'); 
-        
+        const restaurantsCollection = client.db('food_delivery').collection('restaurants');
+
         // Get All RESTAURANTS
         app.get('/restaurants', async (req, res) => {
-          const query = {};
-          const cursor = restaurantsCollection.find(query);
-          const restaurants = await cursor.toArray();
-          res.send(restaurants);
-      });
+            const query = {};
+            const cursor = restaurantsCollection.find(query);
+            const restaurants = await cursor.toArray();
+            res.send(restaurants);
+        });
 
 
-      // Get single RESTAURANT BY ID
-      app.get('/restaurants/:id', async (req, res) => {
-        const id = req.params.id;
-        const query={_id: new ObjectId(id)}
-        const restaurants = await restaurantsCollection.findOne(query);
-        res.send(restaurants);
-    })
+        // GET SINGLE RESTAURANT BY ID
+        app.get('/restaurants/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const restaurants = await restaurantsCollection.findOne(query);
+            res.send(restaurants);
+        })
 
-    
-        
+
+
     }
 
     finally {
@@ -63,7 +63,7 @@ app.get('/', (req, res) => {
 
 //check port
 app.listen(port, () => {
-    console.log("I AM FIRST OPERATION MOZAHID", port)
+    console.log("I AM FIRST OPERATION Ridima", port)
 
 })
 
