@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
@@ -21,7 +21,17 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         await client.connect();
-        const restaurantsCollection = client.db('food_delivery').collection('restaurants');  
+        const restaurantsCollection = client.db('food_delivery').collection('restaurants'); 
+        
+        
+        app.get('/restaurants', async (req, res) => {
+          const query = {};
+          const cursor = restaurantsCollection.find(query);
+          const restaurants = await cursor.toArray();
+          res.send(restaurants);
+      })
+
+    
         
     }
 
@@ -37,14 +47,14 @@ async function run() {
 
 //check server
 app.get('/', (req, res) => {
-    res.send('server is running')
+    res.send('running server ')
 });
 
 
 
 //check port
 app.listen(port, () => {
-    console.log("I AM FIRST OPERATION Ridima", port)
+    console.log("I AM FIRST OPERATION MOZAHID", port)
 
 })
 
