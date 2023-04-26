@@ -22,6 +22,7 @@ async function run() {
     try {
         await client.connect();
         const restaurantsCollection = client.db('food_delivery').collection('restaurants');
+        const reviewCollection = client.db('food_delivery').collection('reviews');
 
         // Get All RESTAURANTS
         app.get('/restaurants', async (req, res) => {
@@ -38,6 +39,20 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const restaurants = await restaurantsCollection.findOne(query);
             res.send(restaurants);
+        });
+
+
+        // GET REVIEW
+        app.get('/reviews', async (req, res) => {
+            const review = await reviewCollection.find().toArray()
+            res.send(review)
+        })
+
+        // CREATE REVIEW
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review)
+            res.send(result)
         })
 
 
