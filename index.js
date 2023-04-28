@@ -75,6 +75,14 @@ async function run() {
             res.send(allfood);
         });
 
+
+        app.delete('/allfood/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await allfoodCollection.deleteOne(query)
+            res.send(result)
+        })
+
         
 
 
