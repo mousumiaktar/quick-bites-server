@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -13,8 +14,26 @@ app.use(express.json());
 
 //connection database
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ayosb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+//jwt
+function verifyJWT(req, res, next) {
+    console.log('abc')
+    const authHeaders = req.headers.authorization;
+    if (!authHeaders) {
+        return res.status(401).send({ message: 'UnAuthorize access' });
+
+    }
+    const token = authHeaders.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
 
 
 
@@ -25,6 +44,67 @@ async function run() {
         const reviewCollection = client.db('food_delivery').collection('reviews');
         const orderCollection = client.db('food_delivery').collection('order');
         const allFoodsCollection = client.db('food_delivery').collection('allfoods');
+        const userCollection = client.db('food_delivery').collection('user');
+
+
+
+        //............
+        //01. token 
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body
+            const filter = { email: email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            //token
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
+            console.log(token)
+            res.send({ result, token });
+
+        })
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                }
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' })
+            }
+        })
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+
+        })
+
+        //get user for load dashboard
+        app.get('/user', async (req, res) => {
+            const user = await userCollection.find().toArray();
+            res.send(user)
+        })
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        //.............
+
 
         // Get All RESTAURANTS
         app.get('/restaurants', async (req, res) => {
