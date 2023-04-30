@@ -71,8 +71,15 @@ async function run() {
             const query = { email: email }
             const order = await orderCollection.find(query).toArray();
             res.send(order)
+        });
 
-        })
+
+        // CREATE FOOD
+        app.post('/addfood', async (req, res) => {
+            const review = req.body;
+            const result = await allFoodsCollection.insertOne(review)
+            res.send(result)
+        });
 
 
 
