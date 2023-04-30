@@ -24,7 +24,7 @@ async function run() {
         const restaurantsCollection = client.db('food_delivery').collection('restaurants');
         const reviewCollection = client.db('food_delivery').collection('reviews');
         const orderCollection = client.db('food_delivery').collection('order');
-        const allfoodCollection = client.db('food_delivery').collection('allfood');
+        const allFoodsCollection = client.db('food_delivery').collection('allfoods');
 
         // Get All RESTAURANTS
         app.get('/restaurants', async (req, res) => {
@@ -87,7 +87,7 @@ async function run() {
         // GET All food
         app.get('/allfood', async (req, res) => {
             const query = {};
-            const cursor = allfoodCollection.find(query);
+            const cursor = allFoodsCollection.find(query);
             const allfood = await cursor.toArray();
             res.send(allfood);
         });
@@ -96,7 +96,7 @@ async function run() {
         app.delete('/allfood/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
-            const result = await allfoodCollection.deleteOne(query)
+            const result = await allFoodsCollection.deleteOne(query)
             res.send(result)
         })
 
