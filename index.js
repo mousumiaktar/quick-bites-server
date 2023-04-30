@@ -61,11 +61,21 @@ async function run() {
         app.post('/order', async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order)
-            res.send(result)
-        });
+            res.send(result);
+        })
 
 
         // GET ORDER
+        app.get('/myorder', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const order = await orderCollection.find(query).toArray();
+            res.send(order)
+
+        })
+
+
+
 
         // GET All food
         app.get('/allfood', async (req, res) => {
@@ -83,7 +93,7 @@ async function run() {
             res.send(result)
         })
 
-        
+
 
 
     }
