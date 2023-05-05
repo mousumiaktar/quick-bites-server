@@ -18,7 +18,6 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 //jwt
 function verifyJWT(req, res, next) {
-    console.log('abc')
     const authHeaders = req.headers.authorization;
     if (!authHeaders) {
         return res.status(401).send({ message: 'UnAuthorize access' });
@@ -73,7 +72,6 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, option);
             //token
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
-            console.log(token)
             res.send({ result, token });
 
         })
