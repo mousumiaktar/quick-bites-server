@@ -17,7 +17,7 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ayosb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-//jwt
+//jwt Token (JSON WEB TOKEN)
 function verifyJWT(req, res, next) {
     const authHeaders = req.headers.authorization;
     if (!authHeaders) {
@@ -40,28 +40,50 @@ function verifyJWT(req, res, next) {
 async function run() {
     try {
         await client.connect();
+        // RESTAURANT COLLECTION
         const restaurantsCollection = client.db('food_delivery').collection('restaurants');
+
+        // REVIEW COLLECTION
         const reviewCollection = client.db('food_delivery').collection('reviews');
+
+        // ORDER COLLECTIONS
         const orderCollection = client.db('food_delivery').collection('order');
+
+        // ALL FOOD COLLECTION
         const allFoodsCollection = client.db('food_delivery').collection('allfoods');
+
+        // USER COLLECTION
         const userCollection = client.db('food_delivery').collection('user');
+
+        // PAYMENT COLLECTION
         const paymentCollection = client.db('food_delivery').collection('payments');
 
-
+        // BIRTHDAY COLLECTION
         const birthdayCollection = client.db('food_delivery').collection('birthday');
+
+        // GIFT COLLECTION
         const giftCollection = client.db('food_delivery').collection('gift');
+
+        // PARTY COLLECTION
         const partyCollection = client.db('food_delivery').collection('party');
+
+        // NIGHTDRINK COLLECTION
         const nightDrinkCollection = client.db('food_delivery').collection('nightDrink');
 
-
+        // BREAKFAST COLLECTION
         const breakfastCollection = client.db('food_delivery').collection('breakfast');
+
+        // LUNCH COLLECTION
         const lunchCollection = client.db('food_delivery').collection('lunch');
+
+        // DINNER COLLECTION
         const dinnerCollection = client.db('food_delivery').collection('dinner');
+
+        // MORNING COFFEE COLLECTION
         const morningCoffeeCollection = client.db('food_delivery').collection('morningcoffee');
 
 
-        // npm install --save stripe
-
+        // ============= PAYMENT API =============// 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const order = req.body;
             const price = order.totalPrice;
@@ -74,8 +96,7 @@ async function run() {
             res.send({ clientSecret: paymentIntent.client_secret })
         });
 
-        //............
-        //01. token 
+        // ===================== USER and ADMIN =================//
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body
@@ -106,7 +127,7 @@ async function run() {
             else {
                 res.status(403).send({ message: 'forbidden' })
             }
-        })
+        });
 
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -114,7 +135,7 @@ async function run() {
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin })
 
-        })
+        });
 
         //get user for load dashboard
         app.get('/user', async (req, res) => {
@@ -126,12 +147,13 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await userCollection.deleteOne(query)
             res.send(result)
-        })
-
-        //.............
+        });
 
 
-        // Get All RESTAURANTS
+
+        // ==================== ALL FOOD GET APIS ARE HERE ====================//
+
+        // GET RESTAURANTS
         app.get('/restaurants', async (req, res) => {
             const query = {};
             const cursor = restaurantsCollection.find(query);
@@ -148,36 +170,68 @@ async function run() {
             res.send(restaurants);
         });
 
+        // GET All food
+        app.get('/allfood', async (req, res) => {
+            const query = {};
+            const cursor = allFoodsCollection.find(query);
+            const allfood = await cursor.toArray();
+            res.send(allfood);
+        });
+
+        // GET ORDER
+        app.get('/myorder', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const order = await orderCollection.find(query).toArray();
+            res.send(order);
+        });
+
+        // GET ORDER BY ID
+        app.get('/myorder/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const order = await orderCollection.findOne(query);
+            res.send(order);
+        });
+
+        // GET REVIEW
+        app.get('/reviews', async (req, res) => {
+            const review = await reviewCollection.find().toArray()
+            res.send(review)
+        });
 
 
-        //celebration food
+        //CELEBRATION FOOD------------------------
         app.get('/birthday', async (req, res) => {
             const query = {};
             const cursor = birthdayCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        });
+
         app.get('/gift', async (req, res) => {
             const query = {};
             const cursor = giftCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        });
+
         app.get('/party', async (req, res) => {
             const query = {};
             const cursor = partyCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        });
+
         app.get('/nightdrink', async (req, res) => {
             const query = {};
             const cursor = nightDrinkCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        });
 
 
-        //menu food
+        //MENU FOOD------------------------------
         app.get('/breakfast', async (req, res) => {
             const query = {};
             const cursor = breakfastCollection.find(query);
@@ -206,17 +260,13 @@ async function run() {
 
 
 
+        // ========================= ALL FOOD POST APIS ARE HERE ==================//
 
-        // GET REVIEW
-        app.get('/reviews', async (req, res) => {
-            const review = await reviewCollection.find().toArray()
-            res.send(review)
-        })
 
-        // CREATE REVIEW
-        app.post('/reviews', async (req, res) => {
+        // CREATE FOOD
+        app.post('/addfood', async (req, res) => {
             const review = req.body;
-            const result = await reviewCollection.insertOne(review)
+            const result = await allFoodsCollection.insertOne(review)
             res.send(result)
         });
 
@@ -225,26 +275,23 @@ async function run() {
             const order = req.body;
             const result = await orderCollection.insertOne(order)
             res.send(result);
-        })
-
-
-        // GET ORDER
-        app.get('/myorder', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email }
-            const order = await orderCollection.find(query).toArray();
-            res.send(order);
         });
 
-        // GET ORDER BY ID
-        app.get('/myorder/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) };
-            const order = await orderCollection.findOne(query);
-            res.send(order);
-        })
+        // CREATE REVIEW
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review)
+            res.send(result)
+        });
+
+        
+
+        
 
 
+        
+
+        // ===================== PATCH =========================//
         app.patch('/myorder/:id', verifyJWT, async(req, res)=>{
             const id = req.params.id;
             const payment = req.body;
@@ -261,25 +308,7 @@ async function run() {
         })
 
 
-        // CREATE FOOD
-        app.post('/addfood', async (req, res) => {
-            const review = req.body;
-            const result = await allFoodsCollection.insertOne(review)
-            res.send(result)
-        });
-
-
-
-
-        // GET All food
-        app.get('/allfood', async (req, res) => {
-            const query = {};
-            const cursor = allFoodsCollection.find(query);
-            const allfood = await cursor.toArray();
-            res.send(allfood);
-        });
-
-
+        // ================== DELETE =========================
         app.delete('/allfood/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
