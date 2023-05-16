@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -44,6 +45,7 @@ async function run() {
         const orderCollection = client.db('food_delivery').collection('order');
         const allFoodsCollection = client.db('food_delivery').collection('allfoods');
         const userCollection = client.db('food_delivery').collection('user');
+        const paymentCollection = client.db('food_delivery').collection('payments');
 
 
         const birthdayCollection = client.db('food_delivery').collection('birthday');
@@ -58,6 +60,19 @@ async function run() {
         const morningCoffeeCollection = client.db('food_delivery').collection('morningcoffee');
 
 
+        // npm install --save stripe
+
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const order = req.body;
+            const price = order.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
         //............
         //01. token 
@@ -218,8 +233,32 @@ async function run() {
             const email = req.query.email;
             const query = { email: email }
             const order = await orderCollection.find(query).toArray();
-            res.send(order)
+            res.send(order);
         });
+
+        // GET ORDER BY ID
+        app.get('/myorder/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const order = await orderCollection.findOne(query);
+            res.send(order);
+        })
+
+
+        app.patch('/myorder/:id', verifyJWT, async(req, res)=>{
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: new ObjectId(id)};
+            const updatedDoc ={
+                $set:{
+                    paid: true,
+                    transactionId: payment.transactionId,
+                }
+            }
+            const result  = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
 
 
         // CREATE FOOD
