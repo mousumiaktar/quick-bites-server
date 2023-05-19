@@ -314,6 +314,14 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await allFoodsCollection.deleteOne(query)
             res.send(result)
+        });
+
+        // delete order
+        app.delete('/myorder/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await orderCollection.deleteOne(query)
+            res.send(result)
         })
 
 
